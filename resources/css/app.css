@@ -1,0 +1,36 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../vendor/livewire/livewire/src/Features/SupportPagination/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+
+@theme {
+    /* Brand palette. Light theme only — there is no dark mode. */
+    --color-brand: #720a0f;
+    --color-brand-dark: #520709;
+    --color-ink: #173b45;
+    --color-paper: #fbf9fa;
+    --color-line: #e6e1e2;
+
+    /* Michroma is for the logo, h1/h2 and nav only. Everything else is Inter. */
+    --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --font-display: 'Michroma', ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+    body {
+        background-color: var(--color-paper);
+        color: var(--color-ink);
+        font-family: var(--font-sans);
+    }
+
+    h1,
+    h2 {
+        font-family: var(--font-display);
+    }
+
+    /* Keeps Alpine-toggled elements hidden until Alpine boots. */
+    [x-cloak] {
+        display: none !important;
+    }
+}
