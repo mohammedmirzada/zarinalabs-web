@@ -18,13 +18,10 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 
-// Read only. We never edit a user's personal data from the admin panel.
-class UserResource extends Resource
-{
+class UserResource extends Resource {
+
     protected static ?string $model = User::class;
-
     protected static string|BackedEnum|null $navigationIcon = Heroicon::Users;
-
     protected static ?int $navigationSort = 5;
 
     public static function canCreate(): bool
@@ -92,13 +89,14 @@ class UserResource extends Resource
                     ->boolean()
                     ->state(fn (User $record) => $record->email_verified_at !== null),
                 TextColumn::make('registrations_count')->label('Registrations')->sortable(),
-                IconColumn::make('is_admin')->boolean()->label('Admin')->toggleable(),
+                IconColumn::make('is_admin')->boolean()->label('Admin'),
             ])
             ->filters([
                 SelectFilter::make('city')->options(config('options.cities')),
                 TernaryFilter::make('email_verified_at')
                     ->label('Verified')
-                    ->nullable(),
+                    ->nullable()
+                    ->native(false)
             ])
             ->defaultSort('created_at', 'desc')
             ->recordActions([

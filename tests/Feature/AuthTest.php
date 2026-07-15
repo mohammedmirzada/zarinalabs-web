@@ -114,6 +114,7 @@ class AuthTest extends TestCase
         $user = User::factory()->create(['city' => 'erbil', 'name' => 'Original Name']);
 
         Livewire::actingAs($user)->test(Profile::class)
+            ->set('name', 'New Name')
             ->set('phone', '+9647701111111')
             ->set('city', 'duhok')
             ->set('education_level', 'master')
@@ -123,10 +124,51 @@ class AuthTest extends TestCase
         $user->refresh();
         $this->assertSame('duhok', $user->city);
         $this->assertSame('master', $user->education_level);
-        $this->assertSame('Original Name', $user->name, 'name must stay read-only');
+        $this->assertSame('New Name', $user->name, 'name is now editable');
+
+        // Gender, DOB and email are never bound to the form, so they cannot change.
+        $this->assertNull($user->avatar_path);
 
         Livewire::actingAs($user)->test(Profile::class)->set('city', 'atlantis')
             ->call('updateProfile')->assertHasErrors('city');
+
+        Livewire::actingAs($user)->test(Profile::class)->set('name', '')
+            ->call('updateProfile')->assertHasErrors('name');
+    }
+
+    public function test_profile_accepts_an_avatar_upload_and_can_remove_it(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('public');
+
+        $user = User::factory()->create();
+
+        Livewire::actingAs($user)->test(Profile::class)
+            ->set('avatar', \Illuminate\Http\UploadedFile::fake()->image('me.jpg'))
+            ->call('updateProfile')->assertHasNoErrors();
+
+        $user->refresh();
+        $this->assertNotNull($user->avatar_path);
+        \Illuminate\Support\Facades\Storage::disk('public')->assertExists($user->avatar_path);
+
+        $path = $user->avatar_path;
+
+        Livewire::actingAs($user)->test(Profile::class)->call('removeAvatar');
+
+        $user->refresh();
+        $this->assertNull($user->avatar_path);
+        \Illuminate\Support\Facades\Storage::disk('public')->assertMissing($path);
+    }
+
+    public function test_profile_rejects_an_oversized_avatar(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake('public');
+
+        $user = User::factory()->create();
+
+        // 3 MB — over the 2 MB (max:2048) limit.
+        Livewire::actingAs($user)->test(Profile::class)
+            ->set('avatar', \Illuminate\Http\UploadedFile::fake()->image('huge.jpg')->size(3072))
+            ->call('updateProfile')->assertHasErrors('avatar');
     }
 
     public function test_password_change_requires_the_current_password(): void

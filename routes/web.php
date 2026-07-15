@@ -1,11 +1,13 @@
 <?php
 
+use App\Livewire\About;
 use App\Livewire\Admin\CheckIn;
 use App\Livewire\Auth\ForgotPassword;
 use App\Livewire\Auth\Login;
 use App\Livewire\Auth\Register;
 use App\Livewire\Auth\ResetPassword;
 use App\Livewire\Auth\VerifyEmail;
+use App\Livewire\Contact;
 use App\Livewire\Courses;
 use App\Livewire\Home;
 use App\Livewire\MyRegistrations;
@@ -19,6 +21,9 @@ Route::livewire('/', Home::class)->name('home');
 
 Route::livewire('/courses', Courses\Index::class)->name('courses.index');
 Route::livewire('/courses/{slug}', Courses\Show::class)->name('courses.show');
+
+Route::livewire('/about', About::class)->name('about');
+Route::livewire('/contact', Contact::class)->name('contact');
 
 Route::middleware('guest')->group(function () {
     Route::livewire('/register', Register::class)->name('register');

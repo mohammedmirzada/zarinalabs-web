@@ -83,7 +83,7 @@ class DatabaseSeeder extends Seeder
     {
         $places = [
             ['ZARINALABS Erbil Campus', '100 Meter Road, near Family Mall', 'erbil'],
-            ['Lions Fort Sulaymaniyah Hub', 'Salim Street, Sulaymaniyah Tower', 'sulaymaniyah'],
+            ['Lions Fort Erbil Hub', 'Salim Street, Sulaymaniyah Tower', 'sulaymaniyah'],
             ['Duhok Innovation Centre', 'Barzan Street, Block 4', 'duhok'],
             ['Baghdad Tech Space', 'Karrada, Al Sadoon Street', 'baghdad'],
         ];

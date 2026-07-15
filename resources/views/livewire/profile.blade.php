@@ -3,13 +3,8 @@
 
     <div class="mt-8 rounded-xl border border-line bg-white p-6">
         <h2 class="text-base font-medium">Personal details</h2>
-        <p class="mt-1 text-sm text-ink/70">These cannot be changed. Contact us if something is wrong.</p>
 
         <dl class="mt-5 grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
-            <div>
-                <dt class="text-ink/70">Full name</dt>
-                <dd class="mt-1">{{ $user->name }}</dd>
-            </div>
             <div>
                 <dt class="text-ink/70">Email</dt>
                 <dd class="mt-1">{{ $user->email }}</dd>
@@ -23,6 +18,7 @@
                 <dd class="mt-1">{{ $user->date_of_birth->format('j F Y') }}</dd>
             </div>
         </dl>
+        <p class="mt-4 text-sm text-ink/70">Email, gender and date of birth cannot be changed. Contact us if something is wrong.</p>
     </div>
 
     <div class="mt-6 rounded-xl border border-line bg-white p-6">
@@ -35,6 +31,47 @@
         @endif
 
         <form wire:submit="updateProfile" class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <div class="sm:col-span-2">
+                <x-form.label for="name">Full name</x-form.label>
+                <x-form.input id="name" wire:model="name" />
+                <x-form.error :messages="$errors->get('name')" />
+            </div>
+
+            <div class="sm:col-span-2">
+                <x-form.label for="avatar">Profile photo</x-form.label>
+                <div class="mt-1 flex items-center gap-4">
+                    {{-- Rounded square, never rounded-full (design tokens). --}}
+                    <div class="size-16 shrink-0 overflow-hidden rounded-lg border border-line bg-paper">
+                        @if ($avatar)
+                            <img src="{{ $avatar->temporaryUrl() }}" alt="New photo preview" class="size-full object-cover">
+                        @elseif ($user->avatarUrl())
+                            <img src="{{ $user->avatarUrl() }}" alt="Current photo" class="size-full object-cover">
+                        @else
+                            <div class="flex size-full items-center justify-center text-ink/40">
+                                <x-heroicon-s-user class="size-8" />
+                            </div>
+                        @endif
+                    </div>
+
+                    <div class="text-sm">
+                        <input type="file" id="avatar" wire:model="avatar" accept="image/*"
+                               class="block w-full cursor-pointer text-sm text-ink/70
+                                      file:mr-3 file:cursor-pointer file:rounded-lg file:border file:border-line
+                                      file:bg-paper file:px-3 file:py-1.5 file:text-sm file:text-ink
+                                      hover:file:bg-line/40">
+                        <p class="mt-1 text-xs text-ink/60">JPG or PNG, up to 2 MB.</p>
+                        @if ($user->avatarUrl() && ! $avatar)
+                            <button type="button" wire:click="removeAvatar"
+                                    class="mt-2 cursor-pointer text-xs text-brand transition-colors hover:text-brand-dark">
+                                Remove photo
+                            </button>
+                        @endif
+                    </div>
+                </div>
+                <div wire:loading wire:target="avatar" class="mt-1 text-xs text-ink/60">Uploading…</div>
+                <x-form.error :messages="$errors->get('avatar')" />
+            </div>
+
             <div>
                 <x-form.label for="phone">Phone</x-form.label>
                 <x-form.input id="phone" wire:model="phone" />
@@ -43,20 +80,22 @@
 
             <div>
                 <x-form.label for="city">City</x-form.label>
-                <x-form.select id="city" wire:model="city" :options="config('options.cities')" />
+                <x-form.combobox id="city" model="city" :required="true" :live="false"
+                                 :options="config('options.cities')" placeholder="Choose a city" />
                 <x-form.error :messages="$errors->get('city')" />
             </div>
 
             <div>
                 <x-form.label for="education_level">Highest education level</x-form.label>
-                <x-form.select id="education_level" wire:model="education_level"
-                               :options="config('options.education_levels')" />
+                <x-form.combobox id="education_level" model="education_level" :required="true" :live="false"
+                                 :options="config('options.education_levels')" placeholder="Choose a level" />
                 <x-form.error :messages="$errors->get('education_level')" />
             </div>
 
             <div>
                 <x-form.label for="it_interest">IT interest field</x-form.label>
-                <x-form.select id="it_interest" wire:model="it_interest" :options="config('options.it_interests')" />
+                <x-form.combobox id="it_interest" model="it_interest" :required="true" :live="false"
+                                 :options="config('options.it_interests')" placeholder="Choose a field" />
                 <x-form.error :messages="$errors->get('it_interest')" />
             </div>
 

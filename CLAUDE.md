@@ -147,8 +147,12 @@ collide with the Filament panel. Phase 4 replaces its placeholder view with the 
 
 ## Non-goals — do not build
 
-Payments, certificates, CV builder, file uploads by users, instructor accounts or approval
+Payments, certificates, CV builder, instructor accounts or approval
 flows, marketing or reminder emails, multi-language, charts and analytics, roles beyond
 admin/user, social login, comments or reviews, dark mode, public API, mobile app, video
 hosting (links only). Course completion is a human decision made by the admin from the
 attendance matrix — never automated.
+
+**Exception to "no file uploads":** users may upload a profile photo on `/profile` (image
+only, max 2 MB, stored on the `public` disk under `avatars/`, old file deleted on replace).
+This is the *only* user upload. No other file uploads by users.

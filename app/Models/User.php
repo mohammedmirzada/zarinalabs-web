@@ -14,9 +14,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 
 // is_admin is deliberately not fillable — it is only ever set by a seeder or by hand.
-#[Fillable(['name', 'gender', 'date_of_birth', 'email', 'phone', 'password', 'city', 'education_level', 'it_interest'])]
+#[Fillable(['name', 'avatar_path', 'gender', 'date_of_birth', 'email', 'phone', 'password', 'city', 'education_level', 'it_interest'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable implements FilamentUser, MustVerifyEmail
 {
@@ -36,6 +37,12 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
             'password' => 'hashed',
             'is_admin' => 'boolean',
         ];
+    }
+
+    /** Public URL for the avatar, or null when none is set. */
+    public function avatarUrl(): ?string
+    {
+        return $this->avatar_path ? Storage::disk('public')->url($this->avatar_path) : null;
     }
 
     /** @return HasMany<Registration, $this> */

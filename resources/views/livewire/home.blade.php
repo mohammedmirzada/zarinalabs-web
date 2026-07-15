@@ -4,7 +4,7 @@
 
         <p class="mt-6 max-w-2xl text-lg text-ink/70">
             ZARINALABS runs the courses, workshops and events that build practical IT skills in Iraq.
-            Browse what is coming up, reserve your seat, and show your QR code at the door.
+            Browse courses, reserve your seat, and show your QR code at the door.
         </p>
 
         <div class="mt-10">
@@ -18,7 +18,7 @@
     <section class="border-t border-line">
         <div class="mx-auto max-w-6xl px-4 py-16">
             <div class="flex flex-wrap items-baseline justify-between gap-4">
-                <h2 class="text-xl">Coming up</h2>
+                <h2 class="text-xl">Courses</h2>
                 <a href="{{ route('courses.index') }}" wire:navigate
                    class="text-sm text-brand underline underline-offset-4 hover:text-brand-dark">
                     Browse all courses

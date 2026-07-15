@@ -89,6 +89,26 @@ class AdminTest extends TestCase
         $this->assertFalse(UserResource::canDelete(User::factory()->create()));
     }
 
+    // The infolist lists registrations.course.title. Without an eager load that is a course
+    // query per registration, which preventLazyLoading turns into an exception.
+    public function test_user_view_page_lists_registered_courses_without_lazy_loading(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $student = User::factory()->create();
+
+        foreach (['Alpha Course', 'Beta Course', 'Gamma Course'] as $title) {
+            $course = Course::factory()->create(['title' => $title, 'is_published' => true]);
+            Registration::create(['user_id' => $student->id, 'course_id' => $course->id]);
+        }
+
+        $this->actingAs($admin)
+            ->get(UserResource::getUrl('view', ['record' => $student]))
+            ->assertSuccessful()
+            ->assertSee('Alpha Course')
+            ->assertSee('Beta Course')
+            ->assertSee('Gamma Course');
+    }
+
     public function test_online_course_is_saved_without_a_location(): void
     {
         $admin = User::factory()->admin()->create();

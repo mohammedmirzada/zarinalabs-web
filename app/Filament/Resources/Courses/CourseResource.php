@@ -33,16 +33,13 @@ use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
 
-class CourseResource extends Resource
-{
+class CourseResource extends Resource {
+
     protected static ?string $model = Course::class;
-
     protected static string|BackedEnum|null $navigationIcon = Heroicon::AcademicCap;
-
     protected static ?int $navigationSort = 1;
 
-    public static function form(Schema $schema): Schema
-    {
+    public static function form(Schema $schema): Schema {
         return $schema
             ->components([
                 Section::make('Details')
@@ -53,17 +50,14 @@ class CourseResource extends Resource
                             ->maxLength(255)
                             ->live(onBlur: true)
                             ->afterStateUpdated(fn (Set $set, ?string $state) => $set('slug', Str::slug($state ?? ''))),
-
                         TextInput::make('slug')
                             ->required()
                             ->maxLength(255)
                             ->unique(ignoreRecord: true),
-
                         Textarea::make('description')
                             ->required()
                             ->rows(6)
                             ->columnSpanFull(),
-
                         TextInput::make('video_url')
                             ->label('Intro video URL')
                             ->url()
@@ -75,14 +69,15 @@ class CourseResource extends Resource
                 Section::make('Classification')
                     ->columns(2)
                     ->schema([
-                        Select::make('type')->options(config('options.course_types'))->required(),
-                        Select::make('category')->options(config('options.categories'))->required(),
-                        Select::make('level')->options(config('options.levels'))->required(),
+                        Select::make('type')->options(config('options.course_types'))->required()->native(false),
+                        Select::make('category')->options(config('options.categories'))->required()->native(false),
+                        Select::make('level')->options(config('options.levels'))->required()->native(false),
                         Select::make('instructor_id')
                             ->label('Instructor')
                             ->relationship('instructor', 'name')
                             ->searchable()
-                            ->preload(),
+                            ->preload()
+                            ->native(false),
                     ]),
 
                 Section::make('Where')
@@ -92,27 +87,21 @@ class CourseResource extends Resource
                             ->options(config('options.formats'))
                             ->required()
                             ->live()
-                            // Clear whichever field no longer applies, so a course flipped from
-                            // offline to online does not keep a stale location, and vice versa.
+                            ->native(false)
                             ->afterStateUpdated(function (Set $set, ?string $state) {
                                 $set($state === 'online' ? 'location_id' : 'meeting_link', null);
                             }),
-
-                        // Exactly one of these shows, and the one that shows is the required one.
-                        // dehydratedWhenHidden keeps the null of the hidden one, which Filament
-                        // would otherwise drop from the save payload — but it also means the
-                        // hidden field is validated, so required() has to be conditional too.
                         TextInput::make('meeting_link')
                             ->url()
                             ->required(fn (Get $get) => $get('format') === 'online')
                             ->visible(fn (Get $get) => $get('format') === 'online')
                             ->dehydratedWhenHidden(),
-
                         Select::make('location_id')
                             ->label('Location')
                             ->relationship('location', 'name')
                             ->searchable()
                             ->preload()
+                            ->native(false)
                             ->required(fn (Get $get) => $get('format') === 'offline')
                             ->visible(fn (Get $get) => $get('format') === 'offline')
                             ->dehydratedWhenHidden(),
@@ -130,41 +119,32 @@ class CourseResource extends Resource
             ]);
     }
 
-    public static function table(Table $table): Table
-    {
+    public static function table(Table $table): Table {
         return $table
             ->modifyQueryUsing(fn ($query) => $query->withCount('registrations'))
             ->columns([
                 TextColumn::make('title')->searchable()->sortable(),
-
                 TextColumn::make('type')
                     ->badge()
                     ->formatStateUsing(fn (string $state) => config('options.course_types')[$state] ?? $state),
-
                 TextColumn::make('level')
                     ->formatStateUsing(fn (string $state) => config('options.levels')[$state] ?? $state),
-
                 TextColumn::make('format')
                     ->formatStateUsing(fn (string $state) => config('options.formats')[$state] ?? $state),
-
-                TextColumn::make('location.name')->placeholder('Online')->toggleable(),
-
+                TextColumn::make('location.name')->placeholder('Online'),
                 TextColumn::make('start_date')->date('j M Y')->sortable(),
-
                 TextColumn::make('seats')
                     ->label('Seats left')
                     ->state(fn (Course $record) => $record->seatsLeft().' of '.$record->capacity),
-
                 TextColumn::make('sessions_count')->counts('sessions')->label('Sessions'),
-
                 IconColumn::make('is_published')->boolean()->label('Published'),
             ])
             ->filters([
-                SelectFilter::make('type')->options(config('options.course_types')),
-                SelectFilter::make('category')->options(config('options.categories')),
-                SelectFilter::make('level')->options(config('options.levels')),
-                SelectFilter::make('format')->options(config('options.formats')),
-                TernaryFilter::make('is_published')->label('Published'),
+                SelectFilter::make('type')->options(config('options.course_types'))->native(false),
+                SelectFilter::make('category')->options(config('options.categories'))->native(false),
+                SelectFilter::make('level')->options(config('options.levels'))->native(false),
+                SelectFilter::make('format')->options(config('options.formats'))->native(false),
+                TernaryFilter::make('is_published')->label('Published')->native(false)
             ])
             ->defaultSort('start_date', 'desc')
             ->recordActions([

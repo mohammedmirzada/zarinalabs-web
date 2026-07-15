@@ -3,17 +3,27 @@
 namespace App\Livewire;
 
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password as PasswordRule;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use Livewire\WithFileUploads;
 
-// Name, gender, date of birth and email are read-only in v1.
+// Gender, date of birth and email are read-only. Name and avatar are editable.
 #[Layout('components.layouts.app')]
 #[Title('Your profile')]
 class Profile extends Component
 {
+    use WithFileUploads;
+
+    public string $name = '';
+
+    // A newly picked file, before it is saved. Null once saved.
+    public ?TemporaryUploadedFile $avatar = null;
+
     public string $phone = '';
 
     public string $city = '';
@@ -32,6 +42,7 @@ class Profile extends Component
     {
         $user = Auth::user();
 
+        $this->name = $user->name;
         $this->phone = $user->phone;
         $this->city = $user->city;
         $this->education_level = $user->education_level;
@@ -41,15 +52,46 @@ class Profile extends Component
     public function updateProfile(): void
     {
         $validated = $this->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'avatar' => ['nullable', 'image', 'max:2048'], // 2 MB
             'phone' => ['required', 'string', 'max:30'],
             'city' => ['required', Rule::in(array_keys(config('options.cities')))],
             'education_level' => ['required', Rule::in(array_keys(config('options.education_levels')))],
             'it_interest' => ['required', Rule::in(array_keys(config('options.it_interests')))],
         ]);
 
-        Auth::user()->update($validated);
+        $user = Auth::user();
+
+        if ($this->avatar) {
+            // Delete the old file so we do not accumulate orphans.
+            if ($user->avatar_path) {
+                Storage::disk('public')->delete($user->avatar_path);
+            }
+
+            $validated['avatar_path'] = $this->avatar->store('avatars', 'public');
+        }
+
+        unset($validated['avatar']);
+
+        $user->update($validated);
+
+        $this->reset('avatar');
 
         session()->flash('profile-status', 'Your details have been saved.');
+    }
+
+    public function removeAvatar(): void
+    {
+        $user = Auth::user();
+
+        if ($user->avatar_path) {
+            Storage::disk('public')->delete($user->avatar_path);
+            $user->update(['avatar_path' => null]);
+        }
+
+        $this->reset('avatar');
+
+        session()->flash('profile-status', 'Your photo has been removed.');
     }
 
     public function updatePassword(): void

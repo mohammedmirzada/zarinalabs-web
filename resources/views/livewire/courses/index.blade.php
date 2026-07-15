@@ -10,20 +10,20 @@
 
         <div>
             <x-form.label for="category">Category</x-form.label>
-            <x-form.select id="category" wire:model.live="category" :options="config('options.categories')"
-                           placeholder="All categories" />
+            <x-form.combobox id="category" model="category" :options="config('options.categories')"
+                             placeholder="All categories" />
         </div>
 
         <div>
             <x-form.label for="city">City</x-form.label>
-            <x-form.select id="city" wire:model.live="city" :options="config('options.cities')"
-                           placeholder="All cities" />
+            <x-form.combobox id="city" model="city" :options="config('options.cities')"
+                             placeholder="All cities" />
         </div>
 
         <div>
             <x-form.label for="level">Level</x-form.label>
-            <x-form.select id="level" wire:model.live="level" :options="config('options.levels')"
-                           placeholder="All levels" />
+            <x-form.combobox id="level" model="level" :options="config('options.levels')"
+                             placeholder="All levels" />
         </div>
 
         <div>
