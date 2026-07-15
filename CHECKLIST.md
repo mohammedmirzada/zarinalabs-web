@@ -2,9 +2,7 @@
 
 1. Understand Attendance in: `http://localhost:8000/admin/courses`
 
-2. Dashboard Optimize Page: add statits like course count, users, inctructors, only overview widget enough for now.
-
-3. Remove Level Course, Locations resource model and table, no needed, only column is enugh, so restructure in abckend and frontend needed for course location.
+3. Remove Level Course, Locations resource model and table, no needed, only column is enugh, so restructure in backend and frontend needed for course location.
 
 4. remove seats left, actually no needed and it is flexible for now. remove any relation to it. instead add another column is_acccepting? if yes user can register, if not it grayed out on frontend.
 
