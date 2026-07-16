@@ -6,7 +6,6 @@ use App\Models\Attendance;
 use App\Models\Course;
 use App\Models\CourseSession;
 use App\Models\Instructor;
-use App\Models\Location;
 use App\Models\Registration;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -21,8 +20,7 @@ class DatabaseSeeder extends Seeder
         $this->createAdmin();
 
         $instructors = $this->createInstructors();
-        $locations = $this->createLocations();
-        $this->createCourses($instructors, $locations);
+        $this->createCourses($instructors);
         $this->createStudentsWithRegistrations();
     }
 
@@ -78,90 +76,81 @@ class DatabaseSeeder extends Seeder
         return $path;
     }
 
-    /** @return Collection<int, Location> */
-    private function createLocations(): Collection
-    {
-        $places = [
-            ['ZARINALABS Erbil Campus', '100 Meter Road, near Family Mall', 'erbil'],
-            ['Lions Fort Erbil Hub', 'Salim Street, Sulaymaniyah Tower', 'sulaymaniyah'],
-            ['Duhok Innovation Centre', 'Barzan Street, Block 4', 'duhok'],
-            ['Baghdad Tech Space', 'Karrada, Al Sadoon Street', 'baghdad'],
-        ];
-
-        return collect($places)->map(fn (array $place) => Location::create([
-            'name' => $place[0],
-            'address' => $place[1],
-            'city' => $place[2],
-        ]));
-    }
-
     /**
      * Ten published courses covering all five types and both formats.
      * `start` is an offset in days from today; sessions step forward by `every` days.
+     * `location` indexes into $venues below (city + venue text), or null for online courses.
      */
-    private function createCourses(Collection $instructors, Collection $locations): void
+    private function createCourses(Collection $instructors): void
     {
+        $venues = [
+            ['city' => 'erbil', 'location' => 'ZARINALABS Erbil Campus, 100 Meter Road, near Family Mall'],
+            ['city' => 'sulaymaniyah', 'location' => 'Lions Fort Sulaymaniyah Hub, Salim Street, Sulaymaniyah Tower'],
+            ['city' => 'duhok', 'location' => 'Duhok Innovation Centre, Barzan Street, Block 4'],
+            ['city' => 'baghdad', 'location' => 'Baghdad Tech Space, Karrada, Al Sadoon Street'],
+        ];
+
         $specs = [
             [
                 'title' => 'Laravel Fundamentals', 'type' => 'course', 'category' => 'software_development',
-                'level' => 'beginner', 'format' => 'offline', 'instructor' => 3, 'location' => 0,
-                'capacity' => 30, 'start' => -21, 'sessions' => 6, 'every' => 7,
+                'format' => 'offline', 'instructor' => 3, 'location' => 0,
+                'start' => -21, 'sessions' => 6, 'every' => 7,
                 'video_url' => 'https://www.youtube.com/watch?v=ImtZ5yENzgE',
                 'description' => "Build a real web application from an empty folder to a deployed site. We cover routing, Eloquent, Blade, validation and testing, one working feature at a time.\n\nYou need basic PHP. You do not need any framework experience.",
             ],
             [
                 'title' => 'CCNA Networking Bootcamp', 'type' => 'course', 'category' => 'networking',
-                'level' => 'advanced', 'format' => 'offline', 'instructor' => 2, 'location' => 1,
-                'capacity' => 20, 'start' => -49, 'sessions' => 7, 'every' => 7,
+                'format' => 'offline', 'instructor' => 2, 'location' => 1,
+                'start' => -49, 'sessions' => 7, 'every' => 7,
                 'description' => "Seven full days of switching, routing, subnetting and troubleshooting on real hardware. Every session ends with a lab you must finish before you leave.\n\nAimed at engineers already working in a network operations role.",
             ],
             [
                 'title' => 'UI/UX Design Sprint', 'type' => 'workshop', 'category' => 'ui_ux_design',
-                'level' => 'beginner', 'format' => 'offline', 'instructor' => 1, 'location' => 2,
-                'capacity' => 18, 'start' => -14, 'sessions' => 3, 'every' => 5,
+                'format' => 'offline', 'instructor' => 1, 'location' => 2,
+                'start' => -14, 'sessions' => 3, 'every' => 5,
                 'description' => "Three sessions, one product idea, one tested prototype. You will interview users, sketch, build in Figma and run a usability test on the last day.\n\nBring a laptop. No design background required.",
             ],
             [
                 'title' => 'Network Security Workshop', 'type' => 'workshop', 'category' => 'cyber_security',
-                'level' => 'intermediate', 'format' => 'offline', 'instructor' => 2, 'location' => 1,
-                'capacity' => 25, 'start' => 10, 'sessions' => 2, 'every' => 1,
+                'format' => 'offline', 'instructor' => 2, 'location' => 1,
+                'start' => 10, 'sessions' => 2, 'every' => 1,
                 'description' => "Two days of hands-on defence: hardening a switch, reading packet captures, spotting lateral movement and writing detection rules that do not drown you in noise.\n\nComfort with the Linux command line is assumed.",
             ],
             [
                 'title' => 'Intro to Cloud on AWS', 'type' => 'webinar', 'category' => 'cloud_computing',
-                'level' => 'beginner', 'format' => 'online', 'instructor' => 0, 'location' => null,
-                'capacity' => 100, 'start' => 14, 'sessions' => 1, 'every' => 1,
+                'format' => 'online', 'instructor' => 0, 'location' => null,
+                'start' => 14, 'sessions' => 1, 'every' => 1,
                 'description' => "A single ninety minute session explaining what the cloud actually is, what EC2, S3 and RDS do, and what they cost. Live demo, questions welcome throughout.",
             ],
             [
                 'title' => 'Cyber Security Awareness', 'type' => 'seminar', 'category' => 'cyber_security',
-                'level' => 'beginner', 'format' => 'online', 'instructor' => 2, 'location' => null,
-                'capacity' => 200, 'start' => 21, 'sessions' => 1, 'every' => 1,
+                'format' => 'online', 'instructor' => 2, 'location' => null, 'is_accepting' => false,
+                'start' => 21, 'sessions' => 1, 'every' => 1,
                 'description' => "Phishing, passwords, and the handful of habits that stop most attacks. Written for everyone in an office, not just the IT team.",
             ],
             [
                 'title' => 'Database Design Seminar', 'type' => 'seminar', 'category' => 'database',
-                'level' => 'intermediate', 'format' => 'offline', 'instructor' => 0, 'location' => 3,
-                'capacity' => 40, 'start' => 28, 'sessions' => 2, 'every' => 1,
+                'format' => 'offline', 'instructor' => 0, 'location' => 3,
+                'start' => 28, 'sessions' => 2, 'every' => 1,
                 'description' => "Normalisation, indexing and the queries that quietly destroy a production database. We look at real schemas and fix them together.\n\nBring a schema you are unhappy with.",
             ],
             [
                 'title' => 'Zarina Tech Meetup', 'type' => 'event', 'category' => 'other',
-                'level' => 'beginner', 'format' => 'offline', 'instructor' => null, 'location' => 0,
-                'capacity' => 120, 'start' => 35, 'sessions' => 1, 'every' => 1,
+                'format' => 'offline', 'instructor' => null, 'location' => 0,
+                'start' => 35, 'sessions' => 1, 'every' => 1,
                 'description' => "An evening of short talks from people building software in Kurdistan, followed by food and conversation. Open to everyone, whatever your level.",
             ],
             [
                 'title' => 'AI for Beginners', 'type' => 'course', 'category' => 'artificial_intelligence',
-                'level' => 'beginner', 'format' => 'online', 'instructor' => 0, 'location' => null,
-                'capacity' => 60, 'start' => 42, 'sessions' => 8, 'every' => 7,
+                'format' => 'online', 'instructor' => 0, 'location' => null,
+                'start' => 42, 'sessions' => 8, 'every' => 7,
                 'video_url' => 'https://vimeo.com/76979871',
                 'description' => "Eight weekly sessions from linear regression to a working neural network, in plain Python. We build every model by hand before reaching for a library.\n\nSchool level mathematics is enough.",
             ],
             [
                 'title' => 'Data Science with Python', 'type' => 'course', 'category' => 'data_science',
-                'level' => 'advanced', 'format' => 'online', 'instructor' => 0, 'location' => null,
-                'capacity' => 35, 'start' => 49, 'sessions' => 6, 'every' => 7,
+                'format' => 'online', 'instructor' => 0, 'location' => null,
+                'start' => 49, 'sessions' => 6, 'every' => 7,
                 'description' => "Pandas, feature engineering, model selection and the parts of a data project that actually take the time: cleaning, leakage and honest evaluation.\n\nYou should already write Python comfortably.",
             ],
         ];
@@ -169,6 +158,7 @@ class DatabaseSeeder extends Seeder
         foreach ($specs as $spec) {
             $start = today()->addDays($spec['start']);
             $end = $start->copy()->addDays(($spec['sessions'] - 1) * $spec['every']);
+            $venue = $spec['location'] === null ? null : $venues[$spec['location']];
 
             $course = Course::create([
                 'title' => $spec['title'],
@@ -177,17 +167,17 @@ class DatabaseSeeder extends Seeder
                 'video_url' => $spec['video_url'] ?? null,
                 'type' => $spec['type'],
                 'category' => $spec['category'],
-                'level' => $spec['level'],
                 'instructor_id' => $spec['instructor'] === null ? null : $instructors[$spec['instructor']]->id,
                 'format' => $spec['format'],
                 'meeting_link' => $spec['format'] === 'online'
                     ? 'https://meet.google.com/'.str($spec['title'])->slug()
                     : null,
-                'location_id' => $spec['location'] === null ? null : $locations[$spec['location']]->id,
+                'city' => $venue['city'] ?? null,
+                'location' => $venue['location'] ?? null,
                 'start_date' => $start,
                 'end_date' => $end,
-                'capacity' => $spec['capacity'],
                 'registration_deadline' => $start->copy()->subDays(3),
+                'is_accepting' => $spec['is_accepting'] ?? true,
                 'is_published' => true,
             ]);
 
@@ -197,7 +187,6 @@ class DatabaseSeeder extends Seeder
                     'session_date' => $start->copy()->addDays($i * $spec['every']),
                     'start_time' => '10:00:00',
                     'end_time' => '13:00:00',
-                    'location_id' => null,  // falls back to the course location
                 ]);
             }
         }

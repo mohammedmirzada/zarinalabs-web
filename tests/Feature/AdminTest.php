@@ -11,7 +11,6 @@ use App\Models\Attendance;
 use App\Models\Course;
 use App\Models\CourseSession;
 use App\Models\Instructor;
-use App\Models\Location;
 use App\Models\Registration;
 use App\Models\User;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -28,7 +27,6 @@ class AdminTest extends TestCase
     {
         return Course::factory()->create([
             'is_published' => true,
-            'capacity' => 20,
             'start_date' => today()->subDays(3),
             'end_date' => today()->addDays(3),
             'registration_deadline' => today()->subDays(5),
@@ -75,9 +73,8 @@ class AdminTest extends TestCase
         $admin = User::factory()->admin()->create();
         $this->course();
         Instructor::factory()->create();
-        Location::factory()->create();
 
-        foreach (['courses', 'instructors', 'locations', 'users'] as $resource) {
+        foreach (['courses', 'instructors', 'users'] as $resource) {
             $this->actingAs($admin)->get("/admin/{$resource}")->assertSuccessful();
         }
     }
@@ -120,13 +117,11 @@ class AdminTest extends TestCase
                 'description' => 'Containers, pods and deployments.',
                 'type' => 'webinar',
                 'category' => 'cloud_computing',
-                'level' => 'beginner',
                 'format' => 'online',
                 'meeting_link' => 'https://meet.example.com/k8s',
                 'start_date' => today()->addWeek(),
                 'end_date' => today()->addWeek()->addDay(),
                 'registration_deadline' => today()->addDays(5),
-                'capacity' => 50,
             ])
             ->call('create')
             ->assertHasNoFormErrors();
@@ -135,18 +130,19 @@ class AdminTest extends TestCase
             'slug' => 'kubernetes-basics',
             'format' => 'online',
             'meeting_link' => 'https://meet.example.com/k8s',
-            'location_id' => null,
+            'city' => null,
+            'location' => null,
         ]);
     }
 
     public function test_flipping_a_course_from_offline_to_online_clears_the_location(): void
     {
         $admin = User::factory()->admin()->create();
-        $location = Location::factory()->create();
 
         $course = Course::factory()->create([
             'format' => 'offline',
-            'location_id' => $location->id,
+            'city' => 'erbil',
+            'location' => 'ZARINALABS Erbil Campus',
             'meeting_link' => null,
         ]);
 
@@ -160,7 +156,8 @@ class AdminTest extends TestCase
 
         $course->refresh();
         $this->assertSame('online', $course->format);
-        $this->assertNull($course->location_id, 'the stale location must be cleared');
+        $this->assertNull($course->city, 'the stale city must be cleared');
+        $this->assertNull($course->location, 'the stale location must be cleared');
         $this->assertSame('https://meet.example.com/moved', $course->meeting_link);
     }
 
@@ -174,11 +171,9 @@ class AdminTest extends TestCase
             'description' => 'x',
             'type' => 'course',
             'category' => 'networking',
-            'level' => 'beginner',
             'start_date' => today()->addWeek(),
             'end_date' => today()->addWeek()->addDay(),
             'registration_deadline' => today()->addDays(5),
-            'capacity' => 10,
         ];
 
         // online without a meeting link
@@ -187,11 +182,11 @@ class AdminTest extends TestCase
             ->call('create')
             ->assertHasFormErrors(['meeting_link']);
 
-        // offline without a location
+        // offline without a venue
         Livewire::actingAs($admin)->test(CreateCourse::class)
             ->fillForm([...$base, 'format' => 'offline'])
             ->call('create')
-            ->assertHasFormErrors(['location_id']);
+            ->assertHasFormErrors(['city', 'location']);
 
         $this->assertDatabaseCount('courses', 0);
     }
@@ -208,13 +203,11 @@ class AdminTest extends TestCase
                 'video_url' => $url,
                 'type' => 'course',
                 'category' => 'networking',
-                'level' => 'beginner',
                 'format' => 'online',
                 'meeting_link' => 'https://meet.example.com/v',
                 'start_date' => today()->addWeek(),
                 'end_date' => today()->addWeek()->addDay(),
                 'registration_deadline' => today()->addDays(5),
-                'capacity' => 10,
             ])
             ->call('create');
 

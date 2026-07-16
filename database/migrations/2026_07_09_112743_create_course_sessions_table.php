@@ -14,7 +14,6 @@ return new class extends Migration
             $table->date('session_date');
             $table->time('start_time');
             $table->time('end_time')->nullable();
-            $table->foreignId('location_id')->nullable()->constrained()->nullOnDelete();  // falls back to the course location
             $table->timestamps();
         });
     }

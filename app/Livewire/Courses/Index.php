@@ -24,42 +24,36 @@ class Index extends Component
     #[Url]
     public string $city = '';
 
-    #[Url]
-    public string $level = '';
-
     /** Empty means "from today", i.e. upcoming only. */
     #[Url]
     public string $date = '';
 
     public function updated(string $property): void
     {
-        if (in_array($property, ['search', 'category', 'city', 'level', 'date'], true)) {
+        if (in_array($property, ['search', 'category', 'city', 'date'], true)) {
             $this->resetPage();
         }
     }
 
     public function clearFilters(): void
     {
-        $this->reset('search', 'category', 'city', 'level', 'date');
+        $this->reset('search', 'category', 'city', 'date');
         $this->resetPage();
     }
 
     public function hasFilters(): bool
     {
         return $this->search !== '' || $this->category !== '' || $this->city !== ''
-            || $this->level !== '' || $this->date !== '';
+            || $this->date !== '';
     }
 
     public function render()
     {
         $courses = Course::published()
-            ->with(['instructor', 'location'])
-            ->withCount('registrations')
+            ->with('instructor')
             ->when($this->search, fn ($query) => $query->where('title', 'like', '%'.$this->search.'%'))
             ->when($this->category, fn ($query) => $query->where('category', $this->category))
-            ->when($this->level, fn ($query) => $query->where('level', $this->level))
-            ->when($this->city, fn ($query) => $query->whereHas('location',
-                fn ($location) => $location->where('city', $this->city)))
+            ->when($this->city, fn ($query) => $query->where('city', $this->city))
             ->whereDate('start_date', '>=', $this->date ?: today())
             ->orderBy('start_date')
             ->paginate(9);

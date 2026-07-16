@@ -9,7 +9,6 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TimePicker;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
@@ -29,12 +28,6 @@ class SessionsRelationManager extends RelationManager
                 DatePicker::make('session_date')->required(),
                 TimePicker::make('start_time')->seconds(false)->required(),
                 TimePicker::make('end_time')->seconds(false),
-                Select::make('location_id')
-                    ->label('Location')
-                    ->relationship('location', 'name')
-                    ->searchable()
-                    ->preload()
-                    ->helperText('Leave empty to use the course location.'),
             ]);
     }
 
@@ -47,7 +40,6 @@ class SessionsRelationManager extends RelationManager
                 TextColumn::make('times')
                     ->label('Time')
                     ->state(fn (CourseSession $record) => $record->timeRange()),
-                TextColumn::make('location.name')->placeholder('Course location'),
                 TextColumn::make('attendances_count')->counts('attendances')->label('Present'),
             ])
             ->defaultSort('session_date')

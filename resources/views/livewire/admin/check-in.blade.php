@@ -12,7 +12,7 @@
             <p class="text-sm text-ink/70">
                 {{ $this->registration->course->format === 'online'
                     ? 'Online'
-                    : $this->registration->course->location?->name }}
+                    : $this->registration->course->location }}
             </p>
         </div>
     </div>

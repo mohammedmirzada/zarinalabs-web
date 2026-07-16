@@ -15,8 +15,7 @@ class Home extends Component
     {
         return view('livewire.home', [
             'courses' => Course::published()->upcoming()
-                ->with(['instructor', 'location'])
-                ->withCount('registrations')
+                ->with('instructor')
                 ->orderBy('start_date')
                 ->take(6)
                 ->get(),

@@ -114,8 +114,6 @@ live in `tests/Feature/MoneyPathsTest.php` as Pest, everything else is PHPUnit c
 - `Model::preventLazyLoading()` is on outside production, so an N+1 is a test failure, not a
   slow page. `QueryBudgetTest` additionally asserts that query counts do not grow as rows are
   added to a page.
-- The capacity race cannot be proven on SQLite, which has no row locks. It was verified
-  separately against MySQL with 12 concurrent processes racing for 3 seats.
 - `tests/TestCase.php` refuses to boot with a cached config, or against a connection whose
   database is `zarinalabs`.
 
@@ -129,17 +127,17 @@ live in `tests/Feature/MoneyPathsTest.php` as Pest, everything else is PHPUnit c
 - The panel middleware sets `blade-icons.components.disabled`, so `<x-heroicon-* />` does
   not work inside `/admin`. Use the `@svg('heroicon-s-check', '...')` directive there.
 - Hidden Filament fields are **not saved** (`isHiddenAndNotDehydratedWhenHidden`). The
-  course form uses `->dehydratedWhenHidden()` on `meeting_link` and `location_id` so
-  flipping the format clears the stale one — which in turn means `required()` must be a
+  course form uses `->dehydratedWhenHidden()` on `meeting_link`, `city` and `location` so
+  flipping the format clears the stale ones — which in turn means `required()` must be a
   closure, or the invisible field gets validated.
 
 ## Registration
 
 `App\Actions\RegisterUserForCourse` is the only way a registration is created. It enforces
-every rule (verified, published, deadline, capacity, no duplicate) and takes a
-`lockForUpdate()` on the course row so two people cannot take the last seat. Verified with
-12 concurrent processes against MySQL. The confirmation email is queued inside the same
-transaction, so a rollback discards the job too.
+every rule (verified, published, `is_accepting`, deadline, no duplicate). There is no
+capacity limit — registration is open while the admin's `is_accepting` toggle is on and the
+deadline has not passed; the DB unique index on `(user_id, course_id)` blocks duplicates.
+The confirmation email is queued inside a transaction, so a rollback discards the job too.
 
 The QR code encodes `URL::signedRoute('admin.check-in', ['registration' => $uuid])`. That
 route lives at `/check-in/{registration}` — deliberately outside `/admin` so it cannot

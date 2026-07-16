@@ -71,7 +71,6 @@ class CourseResource extends Resource {
                     ->schema([
                         Select::make('type')->options(config('options.course_types'))->required()->native(false),
                         Select::make('category')->options(config('options.categories'))->required()->native(false),
-                        Select::make('level')->options(config('options.levels'))->required()->native(false),
                         Select::make('instructor_id')
                             ->label('Instructor')
                             ->relationship('instructor', 'name')
@@ -89,19 +88,29 @@ class CourseResource extends Resource {
                             ->live()
                             ->native(false)
                             ->afterStateUpdated(function (Set $set, ?string $state) {
-                                $set($state === 'online' ? 'location_id' : 'meeting_link', null);
+                                if ($state === 'online') {
+                                    $set('city', null);
+                                    $set('location', null);
+                                } else {
+                                    $set('meeting_link', null);
+                                }
                             }),
                         TextInput::make('meeting_link')
                             ->url()
                             ->required(fn (Get $get) => $get('format') === 'online')
                             ->visible(fn (Get $get) => $get('format') === 'online')
                             ->dehydratedWhenHidden(),
-                        Select::make('location_id')
-                            ->label('Location')
-                            ->relationship('location', 'name')
+                        Select::make('city')
+                            ->options(config('options.cities'))
                             ->searchable()
-                            ->preload()
                             ->native(false)
+                            ->required(fn (Get $get) => $get('format') === 'offline')
+                            ->visible(fn (Get $get) => $get('format') === 'offline')
+                            ->dehydratedWhenHidden(),
+                        TextInput::make('location')
+                            ->label('Venue')
+                            ->maxLength(255)
+                            ->helperText('Building and street, e.g. ZARINALABS Erbil Campus, 100 Meter Road.')
                             ->required(fn (Get $get) => $get('format') === 'offline')
                             ->visible(fn (Get $get) => $get('format') === 'offline')
                             ->dehydratedWhenHidden(),
@@ -113,7 +122,9 @@ class CourseResource extends Resource {
                         DatePicker::make('start_date')->required(),
                         DatePicker::make('end_date')->required()->afterOrEqual('start_date'),
                         DatePicker::make('registration_deadline')->required()->beforeOrEqual('start_date'),
-                        TextInput::make('capacity')->required()->numeric()->minValue(1),
+                        Toggle::make('is_accepting')
+                            ->default(true)
+                            ->helperText('Off closes registration but keeps the course visible (shown greyed out).'),
                         Toggle::make('is_published')->helperText('Drafts are hidden from the public site.'),
                     ]),
             ]);
@@ -121,29 +132,27 @@ class CourseResource extends Resource {
 
     public static function table(Table $table): Table {
         return $table
-            ->modifyQueryUsing(fn ($query) => $query->withCount('registrations'))
             ->columns([
                 TextColumn::make('title')->searchable()->sortable(),
                 TextColumn::make('type')
                     ->badge()
                     ->formatStateUsing(fn (string $state) => config('options.course_types')[$state] ?? $state),
-                TextColumn::make('level')
-                    ->formatStateUsing(fn (string $state) => config('options.levels')[$state] ?? $state),
                 TextColumn::make('format')
                     ->formatStateUsing(fn (string $state) => config('options.formats')[$state] ?? $state),
-                TextColumn::make('location.name')->placeholder('Online'),
+                TextColumn::make('city')
+                    ->formatStateUsing(fn (?string $state) => config('options.cities')[$state] ?? $state)
+                    ->placeholder('Online'),
                 TextColumn::make('start_date')->date('j M Y')->sortable(),
-                TextColumn::make('seats')
-                    ->label('Seats left')
-                    ->state(fn (Course $record) => $record->seatsLeft().' of '.$record->capacity),
                 TextColumn::make('sessions_count')->counts('sessions')->label('Sessions'),
+                IconColumn::make('is_accepting')->boolean()->label('Accepting'),
                 IconColumn::make('is_published')->boolean()->label('Published'),
             ])
             ->filters([
                 SelectFilter::make('type')->options(config('options.course_types'))->native(false),
                 SelectFilter::make('category')->options(config('options.categories'))->native(false),
-                SelectFilter::make('level')->options(config('options.levels'))->native(false),
+                SelectFilter::make('city')->options(config('options.cities'))->native(false),
                 SelectFilter::make('format')->options(config('options.formats'))->native(false),
+                TernaryFilter::make('is_accepting')->label('Accepting')->native(false),
                 TernaryFilter::make('is_published')->label('Published')->native(false)
             ])
             ->defaultSort('start_date', 'desc')

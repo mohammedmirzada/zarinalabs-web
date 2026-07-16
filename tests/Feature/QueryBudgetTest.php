@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Actions\RegisterUserForCourse;
 use App\Models\Course;
 use App\Models\CourseSession;
-use App\Models\Location;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -33,15 +32,11 @@ class QueryBudgetTest extends TestCase
 
     private function seedCourses(int $howMany): void
     {
-        $location = Location::factory()->create();
-
-        Course::factory()->count($howMany)->create([
+        Course::factory()->count($howMany)->offline()->create([
             'is_published' => true,
             'start_date' => today()->addWeek(),
             'end_date' => today()->addWeeks(2),
             'registration_deadline' => today()->addDays(3),
-            'format' => 'offline',
-            'location_id' => $location->id,
         ])->each(fn (Course $course) => CourseSession::factory()->count(3)->create(['course_id' => $course->id]));
     }
 
@@ -90,10 +85,8 @@ class QueryBudgetTest extends TestCase
 
     public function test_course_detail_queries_do_not_grow_with_the_number_of_sessions(): void
     {
-        $location = Location::factory()->create();
-        $course = Course::factory()->create([
+        $course = Course::factory()->offline()->create([
             'is_published' => true, 'slug' => 'budget-course',
-            'format' => 'offline', 'location_id' => $location->id,
             'start_date' => today()->addWeek(), 'end_date' => today()->addWeeks(2),
             'registration_deadline' => today()->addDays(3),
         ]);

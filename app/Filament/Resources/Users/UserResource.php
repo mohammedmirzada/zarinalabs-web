@@ -15,7 +15,6 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
-use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 
 class UserResource extends Resource {
@@ -59,7 +58,6 @@ class UserResource extends Resource {
                         TextEntry::make('it_interest')
                             ->label('IT interest')
                             ->formatStateUsing(fn (string $state) => config('options.it_interests')[$state] ?? $state),
-                        TextEntry::make('email_verified_at')->dateTime('j M Y, H:i')->placeholder('Not verified'),
                         TextEntry::make('created_at')->label('Joined')->date('j M Y'),
                     ]),
 
@@ -84,19 +82,11 @@ class UserResource extends Resource {
                 TextColumn::make('city')
                     ->formatStateUsing(fn (string $state) => config('options.cities')[$state] ?? $state)
                     ->sortable(),
-                IconColumn::make('email_verified_at')
-                    ->label('Verified')
-                    ->boolean()
-                    ->state(fn (User $record) => $record->email_verified_at !== null),
                 TextColumn::make('registrations_count')->label('Registrations')->sortable(),
                 IconColumn::make('is_admin')->boolean()->label('Admin'),
             ])
             ->filters([
                 SelectFilter::make('city')->options(config('options.cities')),
-                TernaryFilter::make('email_verified_at')
-                    ->label('Verified')
-                    ->nullable()
-                    ->native(false)
             ])
             ->defaultSort('created_at', 'desc')
             ->recordActions([

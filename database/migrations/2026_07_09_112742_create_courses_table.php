@@ -16,15 +16,15 @@ return new class extends Migration
             $table->string('video_url')->nullable();
             $table->string('type');
             $table->string('category');
-            $table->string('level');
             $table->foreignId('instructor_id')->nullable()->constrained()->nullOnDelete();
             $table->string('format');
             $table->string('meeting_link')->nullable();  // required when format = online
-            $table->foreignId('location_id')->nullable()->constrained()->nullOnDelete();  // required when format = offline
+            $table->string('city')->nullable();          // required when format = offline (key from options.cities)
+            $table->string('location')->nullable();       // required when format = offline (venue / address, free text)
             $table->date('start_date');
             $table->date('end_date');
-            $table->unsignedInteger('capacity');
             $table->date('registration_deadline');
+            $table->boolean('is_accepting')->default(true);   // admin toggle: closes registration without hiding the course
             $table->boolean('is_published')->default(false);
             $table->timestamps();
         });

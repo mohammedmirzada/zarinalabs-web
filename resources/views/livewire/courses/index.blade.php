@@ -9,6 +9,11 @@
         </div>
 
         <div>
+            <x-form.label for="date">Starting on or after</x-form.label>
+            <x-form.input id="date" type="date" wire:model.live="date" />
+        </div>
+
+        <div>
             <x-form.label for="category">Category</x-form.label>
             <x-form.combobox id="category" model="category" :options="config('options.categories')"
                              placeholder="All categories" />
@@ -20,19 +25,8 @@
                              placeholder="All cities" />
         </div>
 
-        <div>
-            <x-form.label for="level">Level</x-form.label>
-            <x-form.combobox id="level" model="level" :options="config('options.levels')"
-                             placeholder="All levels" />
-        </div>
-
-        <div>
-            <x-form.label for="date">Starting on or after</x-form.label>
-            <x-form.input id="date" type="date" wire:model.live="date" />
-        </div>
-
         @if ($this->hasFilters())
-            <div class="flex items-end lg:col-span-4">
+            <div class="flex items-end">
                 <button type="button" wire:click="clearFilters"
                         class="text-sm text-brand underline underline-offset-4 hover:text-brand-dark">
                     Clear filters

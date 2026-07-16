@@ -15,7 +15,7 @@ class MyRegistrations extends Component
     {
         $registrations = Registration::query()
             ->where('user_id', auth()->id())
-            ->with(['course.location', 'course.sessions.location', 'attendances'])
+            ->with(['course', 'course.sessions', 'attendances'])
             ->get()
             ->sortBy(fn (Registration $registration) => $registration->course->start_date);
 

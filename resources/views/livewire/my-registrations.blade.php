@@ -46,7 +46,7 @@
                                 @endif
                             @else
                                 <p class="mt-3 text-sm text-ink/70">
-                                    {{ $course->location?->name }} — {{ $course->location?->address }}
+                                    {{ $course->location }}{{ $course->city ? ', '.(config('options.cities')[$course->city] ?? $course->city) : '' }}
                                 </p>
                             @endif
                         </div>

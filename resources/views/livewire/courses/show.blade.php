@@ -8,7 +8,6 @@
         <div class="lg:col-span-2">
             <div class="flex flex-wrap gap-2">
                 <x-badge>{{ config('options.course_types')[$this->course->type] }}</x-badge>
-                <x-badge>{{ config('options.levels')[$this->course->level] }}</x-badge>
                 <x-badge>{{ config('options.categories')[$this->course->category] }}</x-badge>
             </div>
 
@@ -56,11 +55,8 @@
                             <li class="flex flex-wrap items-center justify-between gap-2 px-5 py-4 text-sm">
                                 <span class="font-medium">{{ $session->session_date->format('D, j M Y') }}</span>
                                 <span class="text-ink/70">{{ $session->timeRange() }}</span>
-                                {{-- A session may override the course location; otherwise it inherits it. --}}
                                 <span class="text-ink/70">
-                                    {{ $this->course->format === 'online'
-                                        ? 'Online'
-                                        : ($session->location?->name ?? $this->course->location?->name) }}
+                                    {{ $this->course->format === 'online' ? 'Online' : $this->course->location }}
                                 </span>
                             </li>
                         @endforeach
@@ -95,18 +91,17 @@
                             @if ($this->course->format === 'online')
                                 Online
                             @else
-                                {{ $this->course->location?->name }}
+                                {{ $this->course->location }}
                                 <span class="block font-normal text-ink/70">
-                                    {{ $this->course->location?->address }},
-                                    {{ config('options.cities')[$this->course->location?->city] ?? '' }}
+                                    {{ config('options.cities')[$this->course->city] ?? $this->course->city }}
                                 </span>
                             @endif
                         </dd>
                     </div>
 
                     <div>
-                        <dt class="text-ink/70">Seats left</dt>
-                        <dd class="mt-1 font-medium">{{ $this->course->seatsLeft() }} of {{ $this->course->capacity }}</dd>
+                        <dt class="text-ink/70">Registration</dt>
+                        <dd class="mt-1 font-medium">{{ $this->course->isOpen() ? 'Open' : 'Closed' }}</dd>
                     </div>
 
                     <div>
@@ -143,10 +138,10 @@
                                 class="w-full cursor-not-allowed rounded-lg border border-line px-5 py-2.5 text-sm font-medium text-ink/50">
                             Deadline passed
                         </button>
-                    @elseif ($this->course->isFull())
+                    @elseif (! $this->course->is_accepting)
                         <button type="button" disabled
                                 class="w-full cursor-not-allowed rounded-lg border border-line px-5 py-2.5 text-sm font-medium text-ink/50">
-                            Full
+                            Registration closed
                         </button>
                     @else
                         <x-button class="w-full" wire:click="register" wire:loading.attr="disabled">

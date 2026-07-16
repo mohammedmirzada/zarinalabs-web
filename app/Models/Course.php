@@ -11,9 +11,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
-    'title', 'slug', 'description', 'video_url', 'type', 'category', 'level',
-    'instructor_id', 'format', 'meeting_link', 'location_id',
-    'start_date', 'end_date', 'capacity', 'registration_deadline', 'is_published',
+    'title', 'slug', 'description', 'video_url', 'type', 'category',
+    'instructor_id', 'format', 'meeting_link', 'city', 'location',
+    'start_date', 'end_date', 'registration_deadline', 'is_accepting', 'is_published',
 ])]
 class Course extends Model
 {
@@ -26,6 +26,7 @@ class Course extends Model
             'start_date' => 'date',
             'end_date' => 'date',
             'registration_deadline' => 'date',
+            'is_accepting' => 'boolean',
             'is_published' => 'boolean',
         ];
     }
@@ -34,12 +35,6 @@ class Course extends Model
     public function instructor(): BelongsTo
     {
         return $this->belongsTo(Instructor::class);
-    }
-
-    /** @return BelongsTo<Location, $this> */
-    public function location(): BelongsTo
-    {
-        return $this->belongsTo(Location::class);
     }
 
     /** @return HasMany<CourseSession, $this> */
@@ -64,25 +59,16 @@ class Course extends Model
         $query->whereDate('start_date', '>=', today());
     }
 
-    /**
-     * Uses registrations_count when the caller loaded it, so lists do not run a query per card.
-     */
-    public function seatsLeft(): int
-    {
-        $taken = $this->registrations_count ?? $this->registrations()->count();
-
-        return max(0, $this->capacity - $taken);
-    }
-
-    public function isFull(): bool
-    {
-        return $this->seatsLeft() === 0;
-    }
-
     /** The deadline is valid through the end of that day. */
     public function deadlinePassed(): bool
     {
         return today()->gt($this->registration_deadline);
+    }
+
+    /** Registration is possible only while the admin is accepting and the deadline has not passed. */
+    public function isOpen(): bool
+    {
+        return $this->is_accepting && ! $this->deadlinePassed();
     }
 
     /**

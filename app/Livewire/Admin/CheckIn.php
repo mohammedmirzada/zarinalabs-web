@@ -36,7 +36,7 @@ class CheckIn extends Component
     #[Computed]
     public function registration(): Registration
     {
-        return Registration::with(['user', 'course.location'])->findOrFail($this->registrationId);
+        return Registration::with(['user', 'course'])->findOrFail($this->registrationId);
     }
 
     #[Computed]

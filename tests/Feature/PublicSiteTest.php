@@ -9,7 +9,6 @@ use App\Livewire\MyRegistrations;
 use App\Models\Attendance;
 use App\Models\Course;
 use App\Models\CourseSession;
-use App\Models\Location;
 use App\Models\Registration;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -25,7 +24,6 @@ class PublicSiteTest extends TestCase
     {
         return Course::factory()->create(array_merge([
             'is_published' => true,
-            'capacity' => 2,
             'start_date' => today()->addDays(10),
             'end_date' => today()->addDays(12),
             'registration_deadline' => today()->addDays(5),
@@ -75,11 +73,11 @@ class PublicSiteTest extends TestCase
             ->get(route('courses.show', 'open-course'))->assertSee('Verify your email');
     }
 
-    public function test_full_course_shows_full(): void
+    public function test_course_not_accepting_shows_registration_closed(): void
     {
-        $this->course(['capacity' => 0, 'slug' => 'full-course']);
+        $this->course(['is_accepting' => false, 'slug' => 'closed-course']);
         $this->actingAs(User::factory()->create())
-            ->get(route('courses.show', 'full-course'))->assertSee('Full');
+            ->get(route('courses.show', 'closed-course'))->assertSee('Registration closed');
     }
 
     public function test_closed_course_shows_deadline_passed(): void
@@ -120,14 +118,16 @@ class PublicSiteTest extends TestCase
 
     public function test_offline_course_detail_with_sessions_does_not_lazy_load(): void
     {
-        $location = Location::factory()->create();
-        $course = $this->course(['slug' => 'offline-with-sessions', 'format' => 'offline', 'location_id' => $location->id]);
+        $course = $this->course([
+            'slug' => 'offline-with-sessions',
+            'format' => 'offline',
+            'city' => 'erbil',
+            'location' => 'ZARINALABS Erbil Campus',
+        ]);
 
-        // location_id null: the session falls back to the course location
-        CourseSession::factory()->count(3)->create(['course_id' => $course->id, 'location_id' => null]);
-        CourseSession::factory()->create(['course_id' => $course->id, 'location_id' => Location::factory()]);
+        CourseSession::factory()->count(4)->create(['course_id' => $course->id]);
 
-        $this->get(route('courses.show', 'offline-with-sessions'))->assertOk()->assertSee($location->name);
+        $this->get(route('courses.show', 'offline-with-sessions'))->assertOk()->assertSee('ZARINALABS Erbil Campus');
     }
 
     public function test_index_and_home_do_not_lazy_load(): void
@@ -156,11 +156,8 @@ class PublicSiteTest extends TestCase
 
     public function test_course_filters_narrow_the_list(): void
     {
-        $erbil = Location::factory()->create(['city' => 'erbil']);
-        $duhok = Location::factory()->create(['city' => 'duhok']);
-
-        $this->course(['title' => 'Laravel Basics', 'category' => 'software_development', 'level' => 'beginner', 'location_id' => $erbil->id]);
-        $this->course(['title' => 'Firewall Deep Dive', 'category' => 'cyber_security', 'level' => 'advanced', 'location_id' => $duhok->id]);
+        $this->course(['title' => 'Laravel Basics', 'category' => 'software_development', 'city' => 'erbil']);
+        $this->course(['title' => 'Firewall Deep Dive', 'category' => 'cyber_security', 'city' => 'duhok']);
 
         Livewire::test(CoursesIndex::class)->assertSee('Laravel Basics')->assertSee('Firewall Deep Dive');
 
@@ -172,9 +169,6 @@ class PublicSiteTest extends TestCase
 
         Livewire::test(CoursesIndex::class)->set('city', 'erbil')
             ->assertSee('Laravel Basics')->assertDontSee('Firewall Deep Dive');
-
-        Livewire::test(CoursesIndex::class)->set('level', 'advanced')
-            ->assertSee('Firewall Deep Dive')->assertDontSee('Laravel Basics');
     }
 
     public function test_index_hides_drafts_and_past_courses_by_default(): void

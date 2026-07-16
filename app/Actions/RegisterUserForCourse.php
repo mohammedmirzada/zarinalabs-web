@@ -28,22 +28,20 @@ class RegisterUserForCourse
             throw new RegistrationNotAllowed('This course is not open for registration.');
         }
 
+        if (! $course->is_accepting) {
+            throw new RegistrationNotAllowed('This course is not accepting registrations.');
+        }
+
         if (today()->gt($course->registration_deadline)) {
             throw new RegistrationNotAllowed('The registration deadline has passed.');
         }
 
+        // A transaction so the queued confirmation email is discarded if the insert rolls back.
         return DB::transaction(function () use ($user, $course) {
-            // Lock the course row so two people cannot both take the last seat.
-            $locked = Course::whereKey($course->getKey())->lockForUpdate()->firstOrFail();
-
-            if ($locked->registrations()->count() >= $locked->capacity) {
-                throw new RegistrationNotAllowed('This course is full.');
-            }
-
             try {
                 $registration = Registration::create([
                     'user_id' => $user->getKey(),
-                    'course_id' => $locked->getKey(),
+                    'course_id' => $course->getKey(),
                 ]);
             } catch (UniqueConstraintViolationException) {
                 throw new RegistrationNotAllowed('You are already registered for this course.');

@@ -12,7 +12,7 @@ Your seat on **{{ $course->title }}** is confirmed.
 - **Where:** Online
 - **Meeting link:** [{{ $course->meeting_link }}]({{ $course->meeting_link }})
 @else
-- **Location:** {{ $course->location?->name }}, {{ $course->location?->address }}
+- **Location:** {{ $course->location }}, {{ config('options.cities')[$course->city] ?? $course->city }}
 @endif
 
 Bring the QR code on your registrations page. We scan it at the door to mark you present.

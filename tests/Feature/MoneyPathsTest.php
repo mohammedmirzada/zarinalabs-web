@@ -22,7 +22,7 @@ function openCourse(array $overrides = []): Course
 {
     return Course::factory()->create(array_merge([
         'is_published' => true,
-        'capacity' => 2,
+        'is_accepting' => true,
         'start_date' => today()->addDays(10),
         'end_date' => today()->addDays(12),
         'registration_deadline' => today()->addDays(5),
@@ -67,13 +67,12 @@ it('still accepts a registration on the deadline day itself', function () {
     expect($registration->exists)->toBeTrue();
 });
 
-it('rejects the rules even when the button is bypassed', function () {
+it('rejects a closed course even when the button is bypassed', function () {
     // The action is the gate, not the blade template.
-    $full = openCourse(['capacity' => 1]);
-    register(User::factory()->create(), $full);
+    $closed = openCourse(['is_accepting' => false]);
 
-    expect(fn () => register(User::factory()->create(), $full))
-        ->toThrow(RegistrationNotAllowed::class, 'This course is full.');
+    expect(fn () => register(User::factory()->create(), $closed))
+        ->toThrow(RegistrationNotAllowed::class, 'This course is not accepting registrations.');
 });
 
 // ---- duplicate registration -------------------------------------------------
@@ -96,31 +95,6 @@ it('has a database unique index behind the duplicate check', function () {
     // Straight past the action, into the table.
     expect(fn () => Registration::create(['user_id' => $user->id, 'course_id' => $course->id]))
         ->toThrow(Illuminate\Database\UniqueConstraintViolationException::class);
-});
-
-// ---- capacity ---------------------------------------------------------------
-
-/**
- * Sequential here, because SQLite has no row locks. The lockForUpdate() in the action
- * was verified separately against MySQL with 12 concurrent processes racing for 3 seats:
- * 3 won, 9 were refused.
- */
-it('never hands out more seats than the capacity', function () {
-    $course = openCourse(['capacity' => 3]);
-
-    $granted = 0;
-    foreach (User::factory()->count(10)->create() as $user) {
-        try {
-            register($user, $course);
-            $granted++;
-        } catch (RegistrationNotAllowed) {
-            // full
-        }
-    }
-
-    expect($granted)->toBe(3)
-        ->and($course->registrations()->count())->toBe(3)
-        ->and($course->fresh()->loadCount('registrations')->seatsLeft())->toBe(0);
 });
 
 // ---- signed check-in --------------------------------------------------------
@@ -160,7 +134,7 @@ it('refuses a check-in link that is unsigned, tampered with, or opened by the wr
 });
 
 it('never shows the meeting link to anyone who is not registered', function () {
-    $course = openCourse(['format' => 'online', 'meeting_link' => 'https://meet.example.com/private-room', 'location_id' => null]);
+    $course = openCourse(['format' => 'online', 'meeting_link' => 'https://meet.example.com/private-room', 'city' => null, 'location' => null]);
     $user = User::factory()->create();
 
     $this->get(route('courses.show', $course->slug))->assertDontSee('private-room');

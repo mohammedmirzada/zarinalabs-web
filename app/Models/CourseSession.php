@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
 // Named course_sessions because Laravel already owns the `sessions` table.
-#[Fillable(['course_id', 'session_date', 'start_time', 'end_time', 'location_id'])]
+#[Fillable(['course_id', 'session_date', 'start_time', 'end_time'])]
 class CourseSession extends Model
 {
     /** @use HasFactory<CourseSessionFactory> */
@@ -28,12 +28,6 @@ class CourseSession extends Model
     public function course(): BelongsTo
     {
         return $this->belongsTo(Course::class);
-    }
-
-    /** @return BelongsTo<Location, $this> */
-    public function location(): BelongsTo
-    {
-        return $this->belongsTo(Location::class);
     }
 
     /** @return HasMany<Attendance, $this> */

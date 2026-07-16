@@ -27,8 +27,7 @@ class Show extends Component
     public function course(): Course
     {
         return Course::published()
-            ->with(['instructor', 'location', 'sessions.location'])
-            ->withCount('registrations')
+            ->with(['instructor', 'sessions'])
             ->where('slug', $this->slug)
             ->firstOrFail();
     }
